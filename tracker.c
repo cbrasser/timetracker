@@ -97,19 +97,20 @@ typedef struct {
 
 
 void printRow(Row* row) {
-    printf("> task: %s - hours: %.2f - date: %s\n", row->task, row->hours, row->date);
+    printf("\033[1;33m> \033[0m");
+    printf("task: %s - hours: %.2f - date: %s\n", row->task, row->hours, row->date);
 }
 
 void printPrompt() {
-    printf("void ~ ");
-}
+    printf("\033[0;35mvoid \033[1;36m~ \033[0m");
+ }
 
 //Read input from stdin and save it to buffer
 void readInput(InputBuffer* inputBuffer) {
     ssize_t bytesRead = getline(&(inputBuffer->buffer), &(inputBuffer->bufferLength), stdin);
 
     if (bytesRead <= 0) {
-    printf("Error reading input\n");
+    printf("\033[1;31m Error reading input\033[0m\n");
     exit(EXIT_FAILURE);
     }
 
@@ -153,7 +154,7 @@ InputBuffer* newInputBuffer() {
 
 void* getPage(Pager* pager, uint32_t pageNum) {
     if (pageNum > TABLE_MAX_PAGES) {
-        printf("Tried to fetch page number out of bounds. %d > %d\n", pageNum, TABLE_MAX_PAGES);
+        printf("\033[1;31m Error:\033[0m Tried to fetch page number out of bounds. %d > %d\n", pageNum, TABLE_MAX_PAGES);
         exit(EXIT_FAILURE);
     }
 
@@ -171,7 +172,7 @@ void* getPage(Pager* pager, uint32_t pageNum) {
             lseek(pager->fileDescriptor, pageNum * PAGE_SIZE, SEEK_SET);
             ssize_t bytesRead = read(pager->fileDescriptor, page, PAGE_SIZE);
             if (bytesRead == -1) {
-                printf("Error reading file: %d\n", errno);
+                printf("\033[1;31m Error reading file:\033[0m  %d\n", errno);
                 exit(EXIT_FAILURE);
             }
         }
@@ -183,21 +184,21 @@ void* getPage(Pager* pager, uint32_t pageNum) {
 
 void pagerFlush(Pager* pager, uint32_t pageNum, uint32_t size) {
     if(pager->pages[pageNum] == NULL) {
-        printf("Tried to flush null pages.\n");
+        printf("\033[1;31m Error:\033[0m Tried to flush null pages.\n");
         exit(EXIT_FAILURE);
     }
 
     off_t offset = lseek(pager->fileDescriptor, pageNum * PAGE_SIZE, SEEK_SET);
 
     if (offset == -1) {
-        printf("Error seeking: %d\n", errno);
+        printf("\033[1;31m Error seeking: \033[0m  %d\n", errno);
         exit(EXIT_FAILURE);
     }
 
     ssize_t bytesWritten = write(pager->fileDescriptor, pager->pages[pageNum], size);
     
     if(bytesWritten == -1) {
-        printf("Error writing: %d\n", errno);
+        printf("\033[1;31m Error writing:\033[0m  %d\n", errno);
         exit(EXIT_FAILURE);
     }
 }
@@ -229,7 +230,7 @@ void closeDB(Table* table) {
 
     int result = close(pager->fileDescriptor);
     if (result == -1) {
-        printf("Error closing db file.\n");
+        printf("\033[1;31m Error closing db file: \033[0m\n");
         exit(EXIT_FAILURE);
     }
     for (uint32_t i = 0;i< TABLE_MAX_PAGES; i++) {
@@ -361,7 +362,8 @@ ExecuteResult executeTotal(Statement* statement, Table* table) {
             total += row.hours;
         }
     }
-    printf("> task: %s - total time: %.2f\n",statement->selectedTask, total);
+    printf("\033[1;33m> \033[0m");
+    printf("task: %s - total time: %.2f\n",statement->selectedTask, total);
     return EXECUTE_SUCCESS;
 }
 
@@ -376,10 +378,11 @@ ExecuteResult executeAverage(Statement* statement, Table* table) {
             rows += 1;
         }
     }
+    printf("\033[1;33m> \033[0m");
     if (!strcmp(statement->selectedTask, "*") == 0){
-    printf("> task: %s - average time: %.2f\n",statement->selectedTask, total / rows);
+    printf("task: %s - average: %.2f\n",statement->selectedTask, total / rows);
     } else {
-        printf("> global average: %.2f\n",total / rows);
+        printf("global average: %.2f\n",total / rows);
     }
     return EXECUTE_SUCCESS;
 }
@@ -403,7 +406,7 @@ Pager* pagerOpen(const char* filename) {
             S_IWUSR | S_IRUSR); // write/read permissions
 
     if (fd == -1){
-        printf("unable to open file.\n");
+        printf("\033[1;31m Error:\033[0m Unable to open file.\n");
         exit(EXIT_FAILURE);
     }
 
@@ -436,7 +439,7 @@ Table* openDB(const char* filename) {
 // main loop, reads input, currently only recognized '.exit' as a valid command
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        printf("Must supply a db filename.\n");
+        printf("\033[1;31m Error:\033[0m Must supply a db filename.\n");
         exit(EXIT_FAILURE);
     }
 
@@ -463,13 +466,13 @@ int main(int argc, char* argv[]) {
             case (PREPARE_SUCCESS):
                 break;
             case (PREPARE_STRING_TOO_LONG):
-                printf("String is too long.\n");
+                printf("\033[1;31m Error:\033[0m Task name is too long.\n");
                 continue;
             case (PREPARE_SYNTAX_ERROR):
-                printf("Syntax error, could not parse statement.\n");
+                printf("\033[1;31m Error:\033[0m could not parse statement.\n");
                 continue;
             case (PREPARE_UNRECOGNIZED_STATEMENT):
-                printf("Unrecognized keyword at start of '%s'.\n", inputBuffer->buffer);
+                printf("\033[1;31m Error:\033[0m Unrecognized keyword at start of '%s'.\n", inputBuffer->buffer);
                 continue;
         }
 
@@ -477,7 +480,7 @@ int main(int argc, char* argv[]) {
             case (EXECUTE_SUCCESS):
                 break;
             case (EXECUTE_TABLE_FULL):
-                printf("Error: table full.\n");
+                printf("\033[1;31m Error:\033[0m table full.\n");
                 break;
         }
     }
