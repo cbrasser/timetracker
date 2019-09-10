@@ -1,7 +1,7 @@
 # timetracker
 Tiny timetracker written in plain c
 
-
+![sample](https://raw.githubusercontent.com/cbrasser/timetracker/master/time_tracker.png)
 
 ## Usage
 
